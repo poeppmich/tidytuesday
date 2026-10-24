@@ -1,0 +1,509 @@
+---
+title: "tidytuesday_diary"
+format: html
+---
+
+<!--
+  TidyTuesday 2026-10-24: DuBois Circle
+  Spiral chart drawn in the manner of W.E.B. Du Bois.
+
+  Structure
+    1. Setup:   load data, validate, prepare the six rings
+    2. Layout:  SVG filter, CSS, opening of the page container
+    3. Chart:   build rings, hatching strokes, labels, plot
+    4. Closing: footer and end of the page container
+-->
+
+<!-- ===== 1. Setup ===== -->
+
+```{r setup}
+#| include: false
+
+library(tidyverse)
+library(showtext)
+library(showtextdb)
+library(sysfonts)
+knitr::opts_chunk$set(dev.args = list(bg = "#faf9f6"))
+
+# ---------------------------------------------------------------
+# Load data (original values from W.E.B. Du Bois, 1900)
+# ---------------------------------------------------------------
+du_bois <- read_csv("du_bois_circle_data.csv", show_col_types = FALSE) |>
+  rename(jahr = Year, wert = `Houshold Value (Dollars)`)
+
+
+# ---------------------------------------------------------------
+# Prepare the six years as rings (largest value = ring 1)
+# ---------------------------------------------------------------
+daten_fuer_spirale <- du_bois |>
+  arrange(desc(wert)) |>
+  mutate(
+    family = as.character(jahr),   # column name kept, the ring function expects it
+    ring = row_number(),
+    winkel_grad = wert / max(wert) * 668,
+    start_rad = pi / 2,
+    end_rad = (pi / 2) - (winkel_grad * pi / 180)
+  )
+```
+
+<!-- ===== 2. Layout ===== -->
+
+```{=html}
+<!-- SVG filter for the irregular (burnt) top edge -->
+<svg style="display:none;">
+<filter id="burnt-edge">
+  <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="5" result="noise" />
+  <feDisplacementMap in="SourceGraphic" in2="noise" scale="12" xChannelSelector="R" yChannelSelector="G" />
+</filter>
+</svg>
+
+<style>
+/* ---------- Fonts ---------- */
+@import url('https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@500;600&display=swap');
+
+/* ---------- Page ---------- */
+#title-block-header { display: none; }
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'IM Fell English', Georgia, serif;
+  font-size: 18px;
+  background-color: #e8e4d9;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+/* ---------- Paper container ---------- */
+.paper-container {
+  position: relative;
+  max-width: 700px;
+  width: 100%;
+  min-height: 1100px;
+  padding: 50px 60px 50px 60px;
+  margin: 0 auto 60px auto;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 25px 35px 40px rgba(0,0,0,0.45);
+  box-sizing: border-box;
+  background-color: #e8e4d9;
+  background-image: url("logo1.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* Inner sheet */
+.paper-container::before {
+  content: "";
+  position: absolute;
+  inset: 15px;
+  background-color: #faf9f6;
+  border-radius: 2px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  z-index: 1;
+}
+
+/* Burnt top edge */
+.paper-container::after {
+  content: "";
+  position: absolute;
+  top: 8px;
+  left: 14px;
+  right: 14px;
+  height: 24px;
+  background-color: #faf9f6;
+  filter: url(#burnt-edge);
+  z-index: 2;
+}
+
+.masthead, .masthead-rule, .body-from-rule, .page-attribution, .footer-spacer, .page-footer {
+  position: relative;
+  z-index: 10;
+}
+
+/* ---------- Header ---------- */
+.masthead {
+  text-align: center;
+  font-family: 'IM Fell English', Georgia, serif;
+  font-size: 19px;
+  letter-spacing: 7px;
+  color: #2f6f4f;
+  margin-bottom: 15px;
+  text-transform: uppercase;
+}
+
+.masthead-rule {
+  width: 100%;
+  height: 0;
+  border-top: 2px solid #2f6f4f;
+  margin-bottom: 26px;
+}
+
+/* ---------- Body ---------- */
+.body-from-rule {
+  margin-left: -35px;
+  padding-left: 32px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.body-from-rule::before {
+  content: "";
+  position: absolute;
+  left: -3px;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background-color: #2f6f4f;
+}
+
+.text-content {
+  margin-top: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.section-bar {
+  background: #e2eae4;
+  color: #2f6f4f;
+  font-family: 'IM Fell English', Georgia, serif;
+  font-size: 30px;
+  font-weight: bold;
+  line-height: 1.2;
+  padding: 8px 14px 9px;
+  margin: 6px 0 18px 0;
+}
+
+/* Let the chart use the full width of the page */
+.paper-container .cell, .paper-container figure, .paper-container img {
+  margin: 0;
+  max-width: 100%;
+}
+
+/* ---------- Footer ---------- */
+.page-attribution {
+  font-family: 'Caveat', cursive;
+  font-size: 20px;
+  color: #2f6f4f;
+  text-align: right;
+  margin-bottom: 8px;
+  opacity: 0.8;
+}
+
+.footer-spacer { height: 20px; flex-shrink: 0; }
+
+.page-footer {
+  text-align: center;
+  font-family: 'IM Fell English', Georgia, serif;
+  font-size: 20px;
+  color: #4a4640;
+  letter-spacing: 1.5px;
+  border-top: 1px solid #dcd8d0;
+  padding-top: 12px;
+  flex-shrink: 0;
+  margin-top: auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ---------- Print (A4) ---------- */
+@media print {
+  @page { size: A4; margin: 0; }
+  body { width: 210mm; height: 297mm; margin: 0; padding: 0; overflow: hidden; background: #fff; }
+  .paper-container {
+    width: 210mm !important; height: 297mm !important; max-width: none !important; min-height: auto !important;
+    margin: 0 !important; padding: 15mm !important; box-shadow: none !important;
+    background-image: url("logo1.png") !important; background-size: 100% 100% !important;
+    background-position: center !important; background-repeat: no-repeat !important;
+    -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;
+  }
+  .paper-container::before { inset: 0 !important; top: 15mm !important; left: 15mm !important; right: 15mm !important; bottom: 15mm !important; background-color: #faf9f6 !important; box-shadow: none !important; }
+  .paper-container::after { top: 14mm !important; left: 14mm !important; right: 14mm !important; height: 8mm !important; }
+}
+</style>
+
+<!-- ========== PAGE (closed again at the end of the document) ========== -->
+<div class="paper-container" id="seite1">
+  <div class="masthead">Data Portrait Diary</div>
+  <div class="masthead-rule"></div>
+
+  <div class="body-from-rule">
+    <div class="text-content" style="margin-top: 0;">
+
+      <div style="font-family: 'IM Fell English', Georgia, serif; font-size: 45px; line-height: 1.12; color: #3F3C37; margin: 0;">
+        Household and Kitchen Furniture
+      </div>
+      <div style="font-family: Georgia, serif; font-style: italic; font-size: 19px; color: #2f6f4f; margin: 8px 0 22px 0;">
+        Assessed value owned by Georgia Negroes, 1875–1899
+      </div>
+
+      <div class="section-bar">After W.E.B. Du Bois, Paris 1900</div>
+      <div style="height: 40px;"></div>
+```
+
+<!-- ===== 3. Chart ===== -->
+
+```{r spirale}
+#| echo: false
+#| warning: false
+#| message: false
+#| fig-width: 6
+#| fig-height: 5.9
+#| fig-dpi: 200
+#| fig-align: center
+#| out-width: 100%
+
+font_add_google("Cutive Mono", "cutive_mono")
+showtext_auto()
+
+# ===============================================================
+# A. Ring geometry
+# ===============================================================
+
+# ---------------------------------------------------------------
+# A1. Base parameters and growth rate (k) derived from ring 1
+# ---------------------------------------------------------------
+dicke <- 0.12
+r_start_1 <- 2.5
+r_end_1 <- 1.3
+
+ring_1 <- daten_fuer_spirale |> filter(ring == 1)
+delta_1_rad <- ring_1$winkel_grad * (pi / 180)
+k <- (r_start_1 - r_end_1) / delta_1_rad
+
+# ---------------------------------------------------------------
+# A1b. Ring angles: arc length (not angle) is proportional to value
+# ---------------------------------------------------------------
+bogenlaenge <- function(a, delta) {
+  integrate(function(t) sqrt((a - k * t)^2 + k^2), 0, delta)$value
+}
+
+a_mitte <- r_start_1 + (daten_fuer_spirale$ring - 1) * dicke + dicke / 2
+L_ring1 <- bogenlaenge(a_mitte[1], delta_1_rad)
+
+delta_neu <- map_dbl(seq_len(nrow(daten_fuer_spirale)), function(i) {
+  if (i == 1) return(delta_1_rad)
+  ziel <- L_ring1 * daten_fuer_spirale$wert[i] / daten_fuer_spirale$wert[1]
+  uniroot(function(d) bogenlaenge(a_mitte[i], d) - ziel,
+          lower = 1e-6, upper = 4 * pi)$root   # up to two full turns
+})
+
+daten_fuer_spirale <- daten_fuer_spirale |>
+  mutate(winkel_grad = delta_neu * 180 / pi)
+
+# ---------------------------------------------------------------
+# A2. Function that builds one ring polygon
+# ---------------------------------------------------------------
+bau_ring <- function(ring_nr, r_start_innen) {
+  ring_data <- daten_fuer_spirale |> filter(ring == ring_nr)
+  delta_rad <- ring_data$winkel_grad * (pi / 180)
+
+  theta <- seq(0, delta_rad, length.out = 1000)
+  w <- (pi / 2) - theta
+
+  r_in <- r_start_innen - k * theta
+  r_out <- r_in + dicke
+
+  df <- tibble(
+    x_a = r_out * cos(w), y_a = r_out * sin(w),
+    x_i = r_in * cos(w),  y_i = r_in * sin(w)
+  )
+
+  bind_rows(
+    df |> select(x = x_a, y = y_a),
+    df |> select(x = x_i, y = y_i) |> slice(n():1)
+  ) |> mutate(ring = ring_nr, family = ring_data$family)
+}
+
+# ---------------------------------------------------------------
+# A3. Generate all six rings
+# ---------------------------------------------------------------
+poly_1 <- bau_ring(1, r_start_1 + 0 * dicke)
+poly_2 <- bau_ring(2, r_start_1 + 1 * dicke)
+poly_3 <- bau_ring(3, r_start_1 + 2 * dicke)
+poly_4 <- bau_ring(4, r_start_1 + 3 * dicke)
+poly_5 <- bau_ring(5, r_start_1 + 4 * dicke)
+poly_6 <- bau_ring(6, r_start_1 + 5 * dicke)
+
+plot_data <- bind_rows(poly_1, poly_2, poly_3, poly_4, poly_5, poly_6)
+
+# ===============================================================
+# B. Hatching strokes (pencil look)
+# ===============================================================
+
+# ---------------------------------------------------------------
+# B1. Stroke settings
+# ---------------------------------------------------------------
+bg             <- "#faf9f6"   # page colour
+deckung        <- 0.85
+alpha_strich   <- 0.18
+laenge_min     <- 1.0
+laenge_max     <- 3.0
+strich_dicke_u <- dicke * 0.065
+rand_anteil    <- 0.35
+n_pkt          <- 8
+bild_breite_mm <- 180
+
+set.seed(1900)
+
+# ---------------------------------------------------------------
+# B2. Colours and pigment colours
+# ---------------------------------------------------------------
+farben <- c("1" = "#D1414D", "2" = "#F6EBD6", "3" = "#F0C34C",
+            "4" = "#D9C3A8", "5" = "#C2C8D2", "6" = "#F0C4C4")
+
+papier_rgb  <- col2rgb(bg)[, 1]
+farben_rgb  <- col2rgb(farben)
+pigment_rgb <- pmin(pmax((farben_rgb - papier_rgb * (1 - deckung)) / deckung, 0), 255)
+pigmente <- apply(pigment_rgb, 2, function(x) rgb(x[1], x[2], x[3], maxColorValue = 255))
+
+# ---------------------------------------------------------------
+# B3. Generate strokes for all rings
+# ---------------------------------------------------------------
+ring_info <- daten_fuer_spirale |>
+  group_by(ring) |>
+  summarise(delta = max(winkel_grad) * pi / 180, .groups = "drop")
+
+mittl_laenge <- dicke * mean(c(laenge_min, laenge_max))
+ueberlagerungen <- log(1 - deckung) / log(1 - alpha_strich)
+
+bau_striche <- function(n, r_start_innen, delta) {
+  tibble(
+    id     = 1:n,
+    theta0 = runif(n, 0, delta),
+    u0     = ifelse(runif(n) < rand_anteil, rbeta(n, 0.45, 0.45), runif(n)),
+    laenge = runif(n, laenge_min, laenge_max) * dicke,
+    drift  = rnorm(n, 0, 0.10),
+    a      = runif(n, alpha_strich * 0.55, alpha_strich * 1.45)
+  ) |>
+    crossing(s = seq(0, 1, length.out = n_pkt)) |>
+    arrange(id, s) |>
+    mutate(
+      r_anfang = r_start_innen - k * theta0 + u0 * dicke,
+      theta    = theta0 + s * laenge / r_anfang,
+      u        = u0 + drift * s,
+      r        = r_start_innen - k * theta + u * dicke,
+      w        = pi / 2 - theta
+    ) |>
+    filter(u >= 0, u <= 1, theta <= delta) |>
+    transmute(id, a, x = r * cos(w), y = r * sin(w))
+}
+
+striche_liste <- list()
+
+for(i in 1:6) {
+  r_start_i <- r_start_1 + (i - 1) * dicke
+  delta_i   <- ring_info$delta[i]
+
+  flaeche_i  <- dicke * ((r_start_i + dicke / 2) * delta_i - k * delta_i^2 / 2)
+  n_strich_i <- round(ueberlagerungen * flaeche_i / (mittl_laenge * strich_dicke_u))
+
+  striche_i <- bau_striche(n_strich_i, r_start_i, delta_i)
+  striche_i$ring    <- i
+  striche_i$pigment <- pigmente[i]
+  striche_liste[[i]] <- striche_i
+}
+
+striche <- bind_rows(striche_liste)
+
+# ---------------------------------------------------------------
+# B4. Convert stroke width to line width
+# ---------------------------------------------------------------
+mm_pro_einheit <- bild_breite_mm / diff(range(plot_data$x))
+strich_lw      <- strich_dicke_u * mm_pro_einheit / (.pt * 25.4 / 96)
+
+# ===============================================================
+# C. Labels: name on the left ---- line ---- number on the right
+# ===============================================================
+ring_labels <- daten_fuer_spirale |>
+  transmute(
+    ring,
+    name     = family,
+    wert_txt = paste0("$", formatC(wert, format = "d", big.mark = ","))
+  )
+
+schrift_size   <- 3.5
+x_name_links   <- -3.3
+x_zahl_rechts  <- -0.2
+abstand_name   <- 0.08
+abstand_zahl   <- 0.08
+zeichen_korr   <- 1.5
+linie_lw       <- 0.2
+linie_versatz  <- 0.04
+
+zeichen_breite <- 0.6 * schrift_size * .pt / 72 * 25.4 / mm_pro_einheit * zeichen_korr
+
+ring_labels <- ring_labels |>
+  mutate(
+    y_pos         = r_start_1 + (ring - 1) * dicke + dicke / 2,
+    x_name        = x_name_links,
+    x_zahl        = x_zahl_rechts,
+    x_linie_start = x_name_links + nchar(name) * zeichen_breite + abstand_name,
+    x_linie_ende  = x_zahl_rechts - nchar(wert_txt) * zeichen_breite - abstand_zahl
+  )
+
+# ===============================================================
+# D. Plot
+# ===============================================================
+p <- ggplot() +
+  # hatching strokes
+  geom_path(data = striche,
+            aes(x = x, y = y, group = interaction(id, ring), alpha = a, color = pigment),
+            linewidth = strich_lw, lineend = "round") +
+  scale_color_identity() +
+  scale_alpha_identity() +
+
+  # ring outlines
+  geom_polygon(data = plot_data, aes(x = x, y = y, group = ring),
+               fill = NA, color = "#6B6B6B", linewidth = 0.035) +
+
+  # label lines and start marks
+  geom_segment(data = ring_labels,
+               aes(x = x_linie_start, xend = x_linie_ende,
+                   y = y_pos - linie_versatz, yend = y_pos - linie_versatz),
+               color = "#4A4A4A", linewidth = linie_lw) +
+  geom_segment(data = tibble(ring = 1:6,
+                             y0 = r_start_1 + (ring - 1) * dicke),
+               aes(x = 0, xend = 0, y = y0, yend = y0 + dicke),
+               color = "#4A4A4A", linewidth = 0.15) +
+
+  # label texts: family names (left) and species counts (right)
+  geom_text(data = ring_labels,
+            aes(x = x_name, y = y_pos, label = name),
+            family = "cutive_mono", size = schrift_size,
+            color = "#4A4A4A", hjust = 0, vjust = 0.5) +
+
+  geom_text(data = ring_labels,
+            aes(x = x_zahl, y = y_pos, label = wert_txt),
+            family = "cutive_mono", size = schrift_size,
+            color = "#4A4A4A", hjust = 1, vjust = 0.5) +
+
+  coord_fixed() +
+  theme_void() +
+  theme(legend.position = "none",
+        plot.background = element_rect(fill = bg, color = NA))
+
+print(p)
+```
+
+<!-- ===== 4. Closing ===== -->
+
+```{=html}
+    </div>
+  </div>
+
+  <div class="page-attribution" style="display: flex; justify-content: space-between;">
+    <span>Data: W.E.B. Du Bois, 1900</span>
+    <span>Redrawn with R and Quarto</span>
+  </div>
+  <div class="footer-spacer"></div>
+  <div class="page-footer">01</div>
+</div>
+```
