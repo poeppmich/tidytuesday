@@ -10,7 +10,7 @@ format: html
   Structure
     1. Setup:   load data, validate, prepare the six rings
     2. Layout:  SVG filter, CSS, opening of the page container
-    3. Chart:   build rings, hatching strokes, labels, plot
+    3. Chart:   build rings, hatching strokes, table labels, plot
     4. Closing: footer and end of the page container
 -->
 
@@ -260,8 +260,9 @@ body {
 #| fig-align: center
 #| out-width: 100%
 
-font_add_google("Cutive Mono", "cutive_mono")
+font_add_google("Jura", "jura", regular.wt = 300)
 showtext_auto()
+showtext_opts(dpi = 200)   # must match fig-dpi, otherwise text sizes are off
 
 # ===============================================================
 # A. Ring geometry
@@ -420,33 +421,62 @@ mm_pro_einheit <- bild_breite_mm / diff(range(plot_data$x))
 strich_lw      <- strich_dicke_u * mm_pro_einheit / (.pt * 25.4 / 96)
 
 # ===============================================================
-# C. Labels: name on the left ---- line ---- number on the right
+# C. Labels: year ---- line ---- $ amount (table beside the rings)
 # ===============================================================
+
+# ---------------------------------------------------------------
+# C1. Table settings (all positions in plot units, relative to rings)
+# ---------------------------------------------------------------
+schrift_size    <- 4.5        # text size; row height = ring thickness (dicke)
+text_farbe      <- "#4A4A4A"
+linie_farbe     <- "#4A4A4A"
+linie_lw        <- 0.2
+
+x_zahl_rechts   <- -0.12      # right edge of all amounts (ring starts at x = 0)
+x_jahr_links    <- -1.47      # left edge of the years
+zeichen_korr    <- 1.0        # >1 = assume wider characters, <1 = narrower
+symbol_abstand  <- 1.2        # symbol centre to next text, in character widths
+linie_abstand   <- 0.8        # line end to symbol, in character widths
+jahr_abstand    <- 0.3        # year to line start, in character widths
+dollar_offset   <- 0.0        # vertical shift of "$"   (+ up, - down)
+ditto_offset    <- 0.02       # vertical shift of the ditto mark
+
+# ---------------------------------------------------------------
+# C2. Estimated character width (digit) in plot units
+# ---------------------------------------------------------------
+fig_mm_pro_einheit <- min(10 * 25.4 / diff(range(plot_data$x)),
+                          9.5 * 25.4 / diff(range(plot_data$y)))
+zeichen_breite <- 0.6 * schrift_size / fig_mm_pro_einheit * zeichen_korr
+
+# ---------------------------------------------------------------
+# C3. One row per ring: year, amount, symbol and line positions
+# ---------------------------------------------------------------
 ring_labels <- daten_fuer_spirale |>
   transmute(
     ring,
     name     = family,
-    wert_txt = paste0("$", formatC(wert, format = "d", big.mark = ","))
-  )
-
-schrift_size   <- 3.5
-x_name_links   <- -3.3
-x_zahl_rechts  <- -0.2
-abstand_name   <- 0.08
-abstand_zahl   <- 0.08
-zeichen_korr   <- 1.5
-linie_lw       <- 0.2
-linie_versatz  <- 0.04
-
-zeichen_breite <- 0.6 * schrift_size * .pt / 72 * 25.4 / mm_pro_einheit * zeichen_korr
-
-ring_labels <- ring_labels |>
+    wert_txt = formatC(wert, format = "d", big.mark = ","),
+    symbol   = if_else(ring >= 5, "$", "\""),   # 1875 + 1880 = "$", rest = ditto
+    y_pos    = r_start_1 + (ring - 1) * dicke + dicke / 2
+  ) |>
   mutate(
-    y_pos         = r_start_1 + (ring - 1) * dicke + dicke / 2,
-    x_name        = x_name_links,
-    x_zahl        = x_zahl_rechts,
-    x_linie_start = x_name_links + nchar(name) * zeichen_breite + abstand_name,
-    x_linie_ende  = x_zahl_rechts - nchar(wert_txt) * zeichen_breite - abstand_zahl
+    # amount width: digits = 1 unit, commas = 0.5 unit
+    w_betrag       = (str_count(wert_txt, "[0-9]") +
+                      0.5 * str_count(wert_txt, ",")) * zeichen_breite,
+    x_betrag       = x_zahl_rechts,
+    x_betrag_links = x_zahl_rechts - w_betrag,
+
+    # 1875 ($ right beside the amount); other rows share one symbol column
+    x_symbol_spalte = x_zahl_rechts - max(w_betrag) - symbol_abstand * zeichen_breite,
+    x_symbol        = if_else(ring == 6,
+                              x_betrag_links - symbol_abstand * zeichen_breite,
+                              x_symbol_spalte),
+
+    # line runs from the year to the symbol
+    x_linie_start = x_jahr_links + (nchar(name) + jahr_abstand) * zeichen_breite,
+    x_linie_ende  = x_symbol - linie_abstand * zeichen_breite,
+
+    y_symbol      = y_pos + if_else(symbol == "$", dollar_offset, ditto_offset)
   )
 
 # ===============================================================
@@ -464,26 +494,35 @@ p <- ggplot() +
   geom_polygon(data = plot_data, aes(x = x, y = y, group = ring),
                fill = NA, color = "#6B6B6B", linewidth = 0.035) +
 
-  # label lines and start marks
-  geom_segment(data = ring_labels,
-               aes(x = x_linie_start, xend = x_linie_ende,
-                   y = y_pos - linie_versatz, yend = y_pos - linie_versatz),
-               color = "#4A4A4A", linewidth = linie_lw) +
+  # start marks of the rings
   geom_segment(data = tibble(ring = 1:6,
                              y0 = r_start_1 + (ring - 1) * dicke),
                aes(x = 0, xend = 0, y = y0, yend = y0 + dicke),
                color = "#4A4A4A", linewidth = 0.15) +
 
-  # label texts: family names (left) and species counts (right)
-  geom_text(data = ring_labels,
-            aes(x = x_name, y = y_pos, label = name),
-            family = "cutive_mono", size = schrift_size,
-            color = "#4A4A4A", hjust = 0, vjust = 0.5) +
+  # table: lines between year and symbol
+  geom_segment(data = ring_labels,
+               aes(x = x_linie_start, xend = x_linie_ende,
+                   y = y_pos, yend = y_pos),
+               color = linie_farbe, linewidth = linie_lw) +
 
+  # table: years (left)
   geom_text(data = ring_labels,
-            aes(x = x_zahl, y = y_pos, label = wert_txt),
-            family = "cutive_mono", size = schrift_size,
-            color = "#4A4A4A", hjust = 1, vjust = 0.5) +
+            aes(x = x_jahr_links, y = y_pos, label = name),
+            family = "jura", size = schrift_size,
+            color = text_farbe, hjust = 0, vjust = 0.5) +
+
+  # table: symbols ($ or ditto mark)
+  geom_text(data = ring_labels,
+            aes(x = x_symbol, y = y_symbol, label = symbol),
+            family = "jura", size = schrift_size,
+            color = text_farbe, hjust = 0.5, vjust = 0.5) +
+
+  # table: amounts (right-aligned)
+  geom_text(data = ring_labels,
+            aes(x = x_betrag, y = y_pos, label = wert_txt),
+            family = "jura", size = schrift_size,
+            color = text_farbe, hjust = 1, vjust = 0.5) +
 
   coord_fixed() +
   theme_void() +

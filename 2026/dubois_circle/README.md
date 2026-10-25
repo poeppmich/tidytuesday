@@ -6,11 +6,15 @@ A modern recreation of one of the data portraits that W.E.B. Du Bois and his stu
 
 I wanted to find out whether I can rebuild a complex visual design as closely to the original as possible, using only code. What fascinates me most is the colour scheme and the shape of the spiral, with every element in its exact position. Data visualization is an area I want to keep developing in. This is also my first project on GitHub, so I combined both. As a nursing scientist and an advanced beginner in R, I used it to grow with my strengths and my weaknesses, and I share the result including its open points.
 
-## 🖼️ The recreation
+## 🖼️ Original and recreation
 
-![Recreation of the Du Bois spiral in R](figures/du_bois_circle.png)
+| Original plate, 1900 | Recreation in R |
+|:---:|:---:|
+| ![Original Du Bois plate](figures/du_bois_original.jpg) | ![Recreation of the Du Bois spiral in R](figures/du_bois_circle.png) |
 
-> **Status:** work in progress. The ring lengths are still being matched to the original plate.
+The ring ends of the recreation match the original within about 5° (measured on screenshots of both; the end of the 1895 ring is estimated by eye, because the band is cream on cream paper).
+
+*Original: W.E.B. Du Bois and his students, 1900 Paris Exposition, Library of Congress.*
 
 ## 📖 The story
 
@@ -59,7 +63,7 @@ dubois_circle/
 ├── code/       du_bois_circle.qmd
 ├── data/       du_bois_circle_data.csv
 ├── images/     logo1.png (page background)
-├── figures/    du_bois_circle.png (finished chart)
+├── figures/    du_bois_circle.png (recreation), du_bois_original.jpg (original plate)
 └── README.md
 ```
 
