@@ -9,7 +9,7 @@ This project is a modern recreation of Du Bois's iconic spiral chart, visualizin
 
 ## 🖼️ Modern vs. Original Comparison
 
-![Side by Side Comparison](du_bois_circle.png)
+![Recreation of the Du Bois spiral in R](figures/du_bois_circle.png)
 *(Insert your side-by-side image here if you have one, or just keep the generated plot)*
 
 ## 📖 The Story
