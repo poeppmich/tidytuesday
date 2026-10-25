@@ -1,80 +1,81 @@
-# 🎨 Recreating History with Data: W.E.B. Du Bois Spiral Chart
+# 🎨 Recreating History with Data: A W.E.B. Du Bois Spiral in R
 
-What if data visualization wasn’t just about numbers — 
-but about visualizing the explosive growth of a community against all odds?
+A modern recreation of one of the data portraits that W.E.B. Du Bois and his students at Atlanta University drew by hand for the 1900 Paris Exposition. The spiral shows the **assessed value of household and kitchen furniture owned by Georgia Negroes, 1875–1899**, and is built entirely in R and Quarto.
 
-In 1900, W.E.B. Du Bois and his students created a series of hand-drawn data visualizations for the Paris Exposition — not just to inform, but to challenge racial stereotypes and tell a different story.
+## 💡 Why this project
 
-This project is a modern recreation of Du Bois's iconic spiral chart, visualizing the **Household Value Owned by Negroes in Georgia (1875–1899)**, bringing that powerful narrative into today’s tools.
+I wanted to find out whether I can rebuild a complex visual design as closely to the original as possible, using only code. What fascinates me most is the colour scheme and the shape of the spiral, with every element in its exact position. Data visualization is an area I want to keep developing in. This is also my first project on GitHub, so I combined both. As a nursing scientist and an advanced beginner in R, I used it to grow with my strengths and my weaknesses, and I share the result including its open points.
 
-## 🖼️ Modern vs. Original Comparison
+## 🖼️ The recreation
 
 ![Recreation of the Du Bois spiral in R](figures/du_bois_circle.png)
-*(Insert your side-by-side image here if you have one, or just keep the generated plot)*
 
-## 📖 The Story
+> **Status:** work in progress. The ring lengths are still being matched to the original plate.
 
-### 🧠 Historical Context
-At the 1900 Paris Exposition, Du Bois presented data visualizations to showcase the economic and social progress of African Americans after emancipation. 
+## 📖 The story
 
-This specific chart visualizes the staggering increase in property value owned by Black households in Georgia over a 24-year period. The spiral form is not just an aesthetic choice; it represents accumulation, momentum, and an upward trajectory that defied the systemic oppression of the Jim Crow era.
+### Historical context
 
-These works were not just charts — they were:
-* A political statement
-* A design innovation ahead of its time
-* One of the earliest examples of data storytelling
+Du Bois presented these plates in Paris to show how African Americans had progressed in the decades after emancipation. The charts were meant to inform, and just as much to counter the racist stereotypes of the time with evidence. They are a political statement, and they are also a piece of design that was far ahead of its time.
 
-This project revisits that legacy through a modern lens, using code to honor the hand-drawn precision of the original.
+### What the plate shows
 
-## 🛠️ Tech Stack
+Each ring is one year. The length of a ring along its curve is proportional to the assessed value.
+
+| Year | Value (USD) |
+|---|---|
+| 1875 | 21,186 |
+| 1880 | 498,532 |
+| 1885 | 736,170 |
+| 1890 | 1,173,624 |
+| 1895 | 1,322,694 |
+| 1899 | 1,434,975 |
+
+Between 1875 and 1899 the value grew by a factor of almost 70.
+
+## 🚀 What I did
+
+* Redrew the spiral from the original data, with the colours and the labelling of the plate
+* Created the coloured-pencil look with many semi-transparent hatching strokes, generated in code
+* Built the page around the chart (paper background, burnt top edge, handwritten captions) in HTML and CSS inside a Quarto document
+
+## 🎨 Design
+
+* Cream paper background and a six-colour palette taken from the plate
+* Serif and monospaced typefaces for the 1900s feel
+* The chart and the page layout are created entirely in code, without any design software
+
+## 🛠️ Tech stack
 
 * **Language:** R
-* **Framework:** Quarto
-* **Libraries:** `tidyverse`, `ggplot2`, `showtext`, `sysfonts`
-* **Environment:** RStudio / Local R Environment
+* **Document:** Quarto (HTML output)
+* **Packages:** `tidyverse` (including `ggplot2`), `showtext`, `sysfonts`
+* **Environment:** RStudio
 
-## 🚀 What I Did
+## 📁 Project structure
 
-* Recreated the original spiral visualization using modern programmatic tools.
-* Reverse-engineered the concentric ring geometry and linear scaling of the original artwork.
-* Simulated a hand-drawn texture (pencil/brush strokes) using statistical distributions (Beta distribution for natural stroke scattering).
-* Preserved the original aesthetic, color logic, and typographic hierarchy.
-* Explored how early data storytelling techniques translate into today’s design principles.
+```
+dubois_circle/
+├── code/       du_bois_circle.qmd
+├── data/       du_bois_circle_data.csv
+├── images/     logo1.png (page background)
+├── figures/    du_bois_circle.png (finished chart)
+└── README.md
+```
 
-## 🎨 Design Philosophy
-
-To honor Du Bois's original aesthetic and the "Mother Crown" touch of his data portraits, I utilized:
-
-* **Concentric Ring Geometry:** Mapping the largest value (1899) to the innermost ring, allowing the spiral to grow outward in time and value.
-* **Linear Scaling:** Preserving the dramatic visual contrast between the early years (1875) and the peak (1899) to emphasize the explosive economic growth.
-* **Custom Texture:** Simulating organic, hand-drawn strokes rather than flat digital fills, using alpha-blending and randomized stroke paths.
-* **Historical Typography:** Using serif fonts (IM Fell English) and handwritten accents (Caveat) to mirror the 1900s feel.
-* **Du Bois Color Palette:** Muted, earthy tones (Red, Gold, Beige, Slate) that complement the antique paper background.
-
-## 💭 Reflections
-
-Working on this project made me realize:
-
-> Data visualization is not just about clarity — 
-> it’s about power, narrative, and perspective.
-
-Du Bois wasn’t just visualizing data. He was reshaping perception. By coding this spiral, I didn't just replicate a chart; I traced the mathematical proof of resilience.
-
-## 📊 Data Sources
-
-* **Historical Data:** Household Value Owned by Negroes in Georgia (1875-1899), sourced from the original 1900 Paris Exposition datasets.
-* **Reference:** "W.E.B. Du Bois's Data Portraits: Visualizing Black America" by Whitney Battle-Baptiste and Britt Rusert.
-
-## 🚀 How to Run
+## ▶️ How to run
 
 1. Clone the repository.
-2. Ensure you have R and Quarto installed.
-3. Open `du_bois_circle.qmd` in RStudio.
-4. Render the document to HTML to view the interactive layout and generate the final PNG.
+2. Open `tidytuesday.Rproj` in RStudio.
+3. Install the packages: `install.packages(c("tidyverse", "showtext", "sysfonts"))`
+4. Open `2026/dubois_circle/code/du_bois_circle.qmd` and click **Render**. An internet connection is needed to load the Google fonts.
 
----
+## 🔗 Sources
 
-*Authored for TidyTuesday / DataViz Society.* ✨
+* **Data:** [Du Bois Data Portraits](https://github.com/ajstarks/dubois-data-portraits), the repository of the #DuBoisChallenge
+* **Original plates:** [Library of Congress, 1900 Paris Exposition collection](https://www.loc.gov/collections/african-american-photographs-1900-paris-exposition/)
+* **Further reading:** *W.E.B. Du Bois's Data Portraits: Visualizing Black America*, edited by Whitney Battle-Baptiste and Britt Rusert
 
-*Recreations inspired by: "W.E.B Dubois's Data Portraits, Visualizing Black America" by Whitney Battle-Baptiste and Britt Rusert (ISBN 978-1-61689-706-2).*
-*The original plates may be accessed at the Library of Congress.*
+## 🤝 Credits
+
+The style and the plate belong to W.E.B. Du Bois and his students. Translating it to code was my part. Made with R and Quarto, with AI assistance for debugging and code iteration.
