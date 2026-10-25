@@ -28,7 +28,7 @@ knitr::opts_chunk$set(dev.args = list(bg = "#faf9f6"))
 # ---------------------------------------------------------------
 # Load data (original values from W.E.B. Du Bois, 1900)
 # ---------------------------------------------------------------
-du_bois <- read_csv("du_bois_circle_data.csv", show_col_types = FALSE) |>
+du_bois <- read_csv("../data/du_bois_circle_data.csv", show_col_types = FALSE) |>
   rename(jahr = Year, wert = `Houshold Value (Dollars)`)
 
 
@@ -90,7 +90,7 @@ body {
   box-shadow: 25px 35px 40px rgba(0,0,0,0.45);
   box-sizing: border-box;
   background-color: #e8e4d9;
-  background-image: url("logo1.png");
+  background-image: url("../images/logo1.png");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -220,7 +220,7 @@ body {
   .paper-container {
     width: 210mm !important; height: 297mm !important; max-width: none !important; min-height: auto !important;
     margin: 0 !important; padding: 15mm !important; box-shadow: none !important;
-    background-image: url("logo1.png") !important; background-size: 100% 100% !important;
+    background-image: url("../images/logo1.png") !important; background-size: 100% 100% !important;
     background-position: center !important; background-repeat: no-repeat !important;
     -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;
   }
