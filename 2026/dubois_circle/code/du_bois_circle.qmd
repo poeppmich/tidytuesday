@@ -435,7 +435,7 @@ linie_lw        <- 0.2
 x_zahl_rechts   <- -0.12      # right edge of all amounts (ring starts at x = 0)
 x_jahr_links    <- -1.47      # left edge of the years
 zeichen_korr    <- 1.0        # >1 = assume wider characters, <1 = narrower
-symbol_abstand  <- 1.2        # symbol centre to next text, in character widths
+symbol_abstand  <- 0.6       # symbol centre to next text, in character widths
 linie_abstand   <- 0.8        # line end to symbol, in character widths
 jahr_abstand    <- 0.3        # year to line start, in character widths
 dollar_offset   <- 0.0        # vertical shift of "$"   (+ up, - down)
@@ -470,8 +470,8 @@ ring_labels <- daten_fuer_spirale |>
 
     # 1875 ($ right beside the amount); other rows share one symbol column
     x_symbol_spalte = x_zahl_rechts - max(w_betrag) - symbol_abstand * zeichen_breite,
-    x_symbol        = if_else(ring >= 5,
-                              x_betrag_links - dollar_abstand * zeichen_breite,
+    x_symbol        = if_else(ring == 6,
+                              x_betrag_links- 0.5 * zeichen_breite,
                               x_symbol_spalte),
 
     # line runs from the year to the symbol
