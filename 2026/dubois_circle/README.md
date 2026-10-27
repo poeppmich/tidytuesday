@@ -8,7 +8,7 @@ I wanted to find out whether I can rebuild a complex visual design as closely to
 
 ## 🖼️ Original and recreation
 
-| Original plate, 1900 | Recreation in R |
+W.E.B. Du Bois (1900) | Recreation by Michael Pöppelmann (2026)
 |:---:|:---:|
 | ![Original Du Bois plate](figures/du_bois_original.jpg) | ![Recreation of the Du Bois spiral in R](figures/du_bois_circle.png) |
 
