@@ -12,9 +12,29 @@ I wanted to find out whether I can rebuild a complex visual design as closely to
 |:---:|:---:|
 | ![Original Du Bois plate](figures/du_bois_original.jpg) | ![Recreation of the Du Bois spiral in R](figures/du_bois_circle.png) |
 
-The ring ends of the recreation match the original within about 5° (measured on screenshots of both; the end of the 1895 ring is estimated by eye, because the band is cream on cream paper).
-
 *Original: W.E.B. Du Bois and his students, 1900 Paris Exposition, Library of Congress.*
+
+### How close is it?
+
+I checked the recreation against the original by measuring both images.
+
+* **Ring ends:** all six rings end within about 5° of the original. The end of the 1895 ring is the least certain value, because the band is cream on cream paper and I had to estimate it by eye.
+* **Colours:** blue, brown and cream are nearly identical to the original. Red and yellow are slightly paler.
+
+The measurements come from screenshots, so they show the order of magnitude and not an exact value.
+
+### Open points
+
+* red and yellow are a little paler than in the original
+* the paper of the original is a warm cream, the recreation page is almost white
+* the lettering of the original is technical drawing script, the recreation uses a different typeface
+* the hatching texture is my own design choice and not part of the original
+
+## 📄 The finished page
+
+The chart sits on a page styled as a diary sheet, built in HTML and CSS inside the Quarto document.
+
+![Finished page with the recreated spiral](figures/du_bois_page.png)
 
 ## 📖 The story
 
@@ -24,7 +44,7 @@ Du Bois presented these plates in Paris to show how African Americans had progre
 
 ### What the plate shows
 
-Each ring is one year. The length of a ring along its curve is proportional to the assessed value.
+Each ring is one year. The length of a ring along its curve is proportional to the assessed value. Measured on the original, this is the arc length of the band and not the angle, so the outer rings, which have a larger radius, cover a smaller angle for the same value.
 
 | Year | Value (USD) |
 |---|---|
@@ -40,12 +60,14 @@ Between 1875 and 1899 the value grew by a factor of almost 70.
 ## 🚀 What I did
 
 * Redrew the spiral from the original data, with the colours and the labelling of the plate
+* Worked out how the ring lengths are defined by measuring the original (arc length, not angle) and rebuilt the geometry accordingly
+* Tuned the colours step by step against the original
 * Created the coloured-pencil look with many semi-transparent hatching strokes, generated in code
 * Built the page around the chart (paper background, burnt top edge, handwritten captions) in HTML and CSS inside a Quarto document
 
 ## 🎨 Design
 
-* Cream paper background and a six-colour palette taken from the plate
+* A six-colour palette taken from the plate, with thin dark outlines on every ring
 * Serif and monospaced typefaces for the 1900s feel
 * The chart and the page layout are created entirely in code, without any design software
 
@@ -63,7 +85,8 @@ dubois_circle/
 ├── code/       du_bois_circle.qmd
 ├── data/       du_bois_circle_data.csv
 ├── images/     logo1.png (page background)
-├── figures/    du_bois_circle.png (recreation), du_bois_original.jpg (original plate)
+├── figures/    du_bois_circle.png (chart), du_bois_page.png (finished page),
+│               du_bois_original.jpg (original plate)
 └── README.md
 ```
 
@@ -82,4 +105,4 @@ dubois_circle/
 
 ## 🤝 Credits
 
-The style and the plate belong to W.E.B. Du Bois and his students. Translating it to code was my part. Made with R and Quarto, with AI assistance for debugging and code iteration.
+The style and the plate belong to W.E.B. Du Bois and his students. The idea to rebuild it, the decisions about how close to get to the original and the checks against it are mine. When I needed to iterate on the code or got stuck, I worked with an AI assistant.
