@@ -357,8 +357,8 @@ set.seed(1900)
 # ---------------------------------------------------------------
 # B2. Colours and pigment colours
 # ---------------------------------------------------------------
-farben <- c("1" = "#D1414D", "2" = "#F6EBD6", "3" = "#F0C34C",
-            "4" = "#D9C3A8", "5" = "#C2C8D2", "6" = "#F0C4C4")
+farben <- c("1" = "#D8213D", "2" = "#F5ECDA", "3" = "#F2B91F",
+            "4" = "#C9AC86", "5" = "#A5B2D2", "6" = "#EBBCC0")
 
 papier_rgb  <- col2rgb(bg)[, 1]
 farben_rgb  <- col2rgb(farben)
@@ -427,7 +427,7 @@ strich_lw      <- strich_dicke_u * mm_pro_einheit / (.pt * 25.4 / 96)
 # ---------------------------------------------------------------
 # C1. Table settings (all positions in plot units, relative to rings)
 # ---------------------------------------------------------------
-schrift_size    <- 4.5        # text size; row height = ring thickness (dicke)
+schrift_size    <- 5.5        # text size; row height = ring thickness (dicke)
 text_farbe      <- "#4A4A4A"
 linie_farbe     <- "#4A4A4A"
 linie_lw        <- 0.2
@@ -439,7 +439,9 @@ symbol_abstand  <- 1.2        # symbol centre to next text, in character widths
 linie_abstand   <- 0.8        # line end to symbol, in character widths
 jahr_abstand    <- 0.3        # year to line start, in character widths
 dollar_offset   <- 0.0        # vertical shift of "$"   (+ up, - down)
-ditto_offset    <- 0.02       # vertical shift of the ditto mark
+dollar_abstand  <- 0.7        # "$" to amount, in character widths
+ditto_size      <- 9       # ditto mark is a tiny glyph, so draw it larger
+ditto_offset    <- -0.05     # replaces the old value (negative = lower)
 
 # ---------------------------------------------------------------
 # C2. Estimated character width (digit) in plot units
@@ -468,8 +470,8 @@ ring_labels <- daten_fuer_spirale |>
 
     # 1875 ($ right beside the amount); other rows share one symbol column
     x_symbol_spalte = x_zahl_rechts - max(w_betrag) - symbol_abstand * zeichen_breite,
-    x_symbol        = if_else(ring == 6,
-                              x_betrag_links - symbol_abstand * zeichen_breite,
+    x_symbol        = if_else(ring >= 5,
+                              x_betrag_links - dollar_abstand * zeichen_breite,
                               x_symbol_spalte),
 
     # line runs from the year to the symbol
@@ -492,7 +494,7 @@ p <- ggplot() +
 
   # ring outlines
   geom_polygon(data = plot_data, aes(x = x, y = y, group = ring),
-               fill = NA, color = "#6B6B6B", linewidth = 0.035) +
+               fill = NA, color = "#4A4A4A", linewidth = 0.12) +
 
   # start marks of the rings
   geom_segment(data = tibble(ring = 1:6,
@@ -511,11 +513,16 @@ p <- ggplot() +
             aes(x = x_jahr_links, y = y_pos, label = name),
             family = "jura", size = schrift_size,
             color = text_farbe, hjust = 0, vjust = 0.5) +
-
-  # table: symbols ($ or ditto mark)
-  geom_text(data = ring_labels,
+    # table: dollar signs
+  geom_text(data = filter(ring_labels, symbol == "$"),
             aes(x = x_symbol, y = y_symbol, label = symbol),
             family = "jura", size = schrift_size,
+            color = text_farbe, hjust = 0.5, vjust = 0.5) +
+
+  # table: ditto marks (larger)
+  geom_text(data = filter(ring_labels, symbol == "\""),
+            aes(x = x_symbol, y = y_symbol, label = symbol),
+            family = "jura", size = ditto_size,
             color = text_farbe, hjust = 0.5, vjust = 0.5) +
 
   # table: amounts (right-aligned)
