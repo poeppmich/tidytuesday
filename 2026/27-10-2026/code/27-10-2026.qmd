@@ -205,7 +205,7 @@ body {
 }
 
 .masthead-rule {
-  width: 100%;
+  width: 93%;
   height: 0;
   border-top: 2px solid #2f6f4f;
   margin-bottom: 26px;
@@ -462,7 +462,7 @@ body {
 .footer-spacer { height: 20px; flex-shrink: 0; }
 
 .page-footer {
-  width: 100%;
+  width: 93%;
   margin-top: auto;
   padding-top: 12px;
   box-sizing: border-box;
