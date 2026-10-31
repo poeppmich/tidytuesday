@@ -551,8 +551,7 @@ cat(summary_html)
   </div> <!-- /body-from-rule -->
 
   <div class="page-attribution">
-    <span>Redrawn with R and Quarto</span>
-    <span>Data: github.com/rfordatascience/tidytuesday</span>
+    <span>Built with R and Quarto. <br>Concept, design and research question: MP.<br> Code: AI-assisted, iteratively refined by MP.</span>
   </div>
   <div class="footer-spacer"></div>
   <div class="page-footer">01</div>

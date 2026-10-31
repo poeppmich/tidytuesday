@@ -91,6 +91,11 @@ An internet connection is needed to load the Google fonts.
 - Exchange rates: [fawazahmed0 currency API](https://github.com/fawazahmed0/exchange-api) (CC0)
 - Dataset: [TidyTuesday](https://github.com/rfordatascience/tidytuesday) by the R4DS Online Learning Community
 
+##  How this was made: 
+
+- The research question, the diary-page concept, the receipt design and all design decisions are mine. 
+- The code was written with an AI assistant. I reviewed each output, corrected it and iterated until it met my expectations.
+
 ## 🤝 Credits
 
 Thanks to Georgios Karamanis for curating the dataset. IKEA and KLIPPAN are trademarks of Inter IKEA Systems B.V.; this project is not affiliated with IKEA. The idea, the design decisions and the checks are mine. When I needed to iterate on the code or got stuck, I worked with an AI assistant.
