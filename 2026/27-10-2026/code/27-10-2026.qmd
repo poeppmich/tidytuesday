@@ -505,7 +505,7 @@ body {
 
   <div class="body-from-rule">
     <div class="text-content">
-      <div class="title">The Price of a IKEA-KLIPPAN</div>
+      <div class="title">The Price of an IKEA-KLIPPAN</div>
       <div class="section-bar">One two-seat sofa in 26 European countries</div>
 
       <div class="receipt-container">
