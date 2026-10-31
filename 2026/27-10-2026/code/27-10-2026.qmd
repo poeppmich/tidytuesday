@@ -1,0 +1,560 @@
+---
+title: "TidyTuesday 2026-10-27: IKEA Challenge"
+format:
+  html:
+    embed-resources: true
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+<!--
+  The Price of an IKEA KLIPPAN
+  One two-seat sofa in 26 European countries, drawn as a receipt.
+
+  Structure
+    1. Setup   - load data, prepare HTML snippets
+    2. Layout  - SVG filter, CSS, page container
+    3. Receipt - one bar per country
+    4. Closing - summary, signature, page footer
+
+  The page <div> opened in section 2 is closed at the very end of the file.
+  Chunks only contain self-contained HTML strings, so Pandoc cannot break them.
+-->
+
+<!-- ===== 1. Setup ===== -->
+
+```{r setup}
+library(tidyverse)
+
+# Country lookup: ISO code, display name, flag emoji
+countries <- tribble(
+  ~country, ~country_name,             ~flag,
+  "at",     "Austria",         "🇦🇹",
+  "be",     "Belgium",         "🇧🇪",
+  "ch",     "Switzerland",     "🇨🇭",
+  "cz",     "Czech Republic",  "🇨🇿",
+  "de",     "Germany",         "🇩🇪",
+  "dk",     "Denmark",         "🇩🇰",
+  "ee",     "Estonia",         "🇪🇪",
+  "es",     "Spain",           "🇪🇸",
+  "fi",     "Finland",         "🇫🇮",
+  "fr",     "France",          "🇫🇷",
+  "gb",     "Great Britain",   "🇬🇧",
+  "hr",     "Croatia",         "🇭🇷",
+  "hu",     "Hungary",         "🇭🇺",
+  "ie",     "Ireland",         "🇮🇪",
+  "it",     "Italy",           "🇮🇹",
+  "lt",     "Lithuania",       "🇱🇹",
+  "lv",     "Latvia",          "🇱🇻",
+  "nl",     "Netherlands",     "🇳🇱",
+  "no",     "Norway",          "🇳🇴",
+  "pl",     "Poland",          "🇵🇱",
+  "pt",     "Portugal",        "🇵🇹",
+  "ro",     "Romania",         "🇷🇴",
+  "rs",     "Serbia",          "🇷🇸",
+  "se",     "Sweden",          "🇸🇪",
+  "si",     "Slovenia",        "🇸🇮",
+  "sk",     "Slovakia",        "🇸🇰"
+)
+
+# ---------------------------------------------------------------
+# Load and prepare data
+# ---------------------------------------------------------------
+ikea <- read_csv("../data/ikea_seating.csv")
+
+product_no <- 40399314   # KLIPPAN 2-seat sofa
+
+klippan <- ikea |>
+  filter(item_no == product_no, country %in% countries$country) |>
+  left_join(countries, by = "country") |>
+  transmute(country_name, flag, price_usd, price = round(price_usd)) |>
+  arrange(desc(price_usd)) |>                      # most expensive first
+  mutate(
+    width_pct = price / max(price) * 100,
+    row_class = case_when(
+      row_number() == 1 ~ " is-top",               # most expensive country
+      row_number() == n() ~ " is-low",             # cheapest country
+      TRUE ~ ""
+    ),
+    note = if_else(row_class == " is-low",
+                   '<span class="low-note">cheapest</span>', "")
+  )
+
+# ---------------------------------------------------------------
+# HTML snippets
+# ---------------------------------------------------------------
+lines_html <- sprintf(
+  paste0(
+    '<div class="receipt-line%s">',
+    '<span class="country">%s</span>',
+    '<span class="flag">%s</span>',
+    '<span class="price">$%d</span>',
+    '<div class="bar-track"><div class="bar" style="--width: %.1f%%;"></div></div>',
+    '%s</div>'
+  ),
+  klippan$row_class, klippan$country_name, klippan$flag,
+  as.integer(klippan$price), klippan$width_pct, klippan$note
+) |>
+  paste(collapse = "\n")
+
+# Summary statistics for the receipt footer
+summary_html <- paste0(
+  '<div class="receipt-summary">',
+  '<div class="summary-row"><span class="summary-label">TOTAL COUNT:</span><span>',
+  nrow(klippan), ' Countries</span></div>',
+  '<div class="summary-row"><span class="summary-label">PRICE RANGE:</span><span>$',
+  sprintf("%.2f", min(klippan$price_usd)), ' – $',
+  sprintf("%.2f", max(klippan$price_usd)), '</span></div>',
+  '<div class="summary-row"><span class="summary-label">MEDIAN:</span><span>$',
+  sprintf("%.2f", median(klippan$price_usd)), '</span></div>',
+  '</div>'
+)
+```
+
+<!-- ===== 2. Layout ===== -->
+
+```{=html}
+<!-- SVG filter for the irregular (burnt) top edge of the paper -->
+<svg style="display:none;">
+  <filter id="burnt-edge">
+    <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="5" result="noise" />
+    <feDisplacementMap in="SourceGraphic" in2="noise" scale="12" xChannelSelector="R" yChannelSelector="G" />
+  </filter>
+</svg>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Caveat:wght@500;600&display=swap');
+
+/* ---------- Page ---------- */
+#title-block-header { display: none; }
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'IM Fell English', Georgia, serif;
+  font-size: 18px;
+  background-color: #e8e4d9;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+/* ---------- Paper container ---------- */
+.paper-container {
+  position: relative;
+  max-width: 740px;
+  width: 100%;
+  min-height: 1100px;
+  padding: 50px 0 50px 60px;
+  margin: 0 auto 60px auto;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  box-shadow: 25px 35px 40px rgba(0, 0, 0, 0.45);
+  background-color: #e8e4d9;
+  background-image: url("../images/logo1.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* Inner sheet */
+.paper-container::before {
+  content: "";
+  position: absolute;
+  inset: 15px;
+  background-color: #faf9f6;
+  border-radius: 2px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  z-index: 1;
+}
+
+/* Burnt top edge */
+.paper-container::after {
+  content: "";
+  position: absolute;
+  top: 8px;
+  left: 14px;
+  right: 14px;
+  height: 24px;
+  background-color: #faf9f6;
+  filter: url(#burnt-edge);
+  z-index: 2;
+}
+
+/* Keep content above the inner sheet */
+.masthead, .masthead-rule, .body-from-rule,
+.page-attribution, .footer-spacer, .page-footer {
+  position: relative;
+  z-index: 10;
+}
+
+/* ---------- Header ---------- */
+.masthead {
+  text-align: center;
+  font-size: 19px;
+  letter-spacing: 7px;
+  color: #2f6f4f;
+  margin-bottom: 15px;
+  text-transform: uppercase;
+}
+
+.masthead-rule {
+  width: 100%;
+  height: 0;
+  border-top: 2px solid #2f6f4f;
+  margin-bottom: 26px;
+}
+
+/* ---------- Body ---------- */
+.body-from-rule {
+  margin-left: -35px;
+  padding-left: 32px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Vertical green rule */
+.body-from-rule::before {
+  content: "";
+  position: absolute;
+  left: -3px;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background-color: #2f6f4f;
+}
+
+.text-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.title {
+  font-size: 35px;
+  line-height: 1.12;
+  color: #3F3C37;
+  margin: 0 0 18px 0;
+}
+
+.section-bar {
+  background: #e2eae4;
+  color: #2f6f4f;
+  font-size: 30px;
+  font-weight: bold;
+  line-height: 1.2;
+  text-align: center;
+  padding: 8px 14px 9px;
+  margin: 0 0 58px 0;
+  max-width: 93%;
+}
+
+/* ---------- Receipt ---------- */
+.receipt-container {
+  position: relative;
+  width: 100%;
+  max-width: 540px;
+  margin: 0 auto 30px auto;
+  padding: 25px 20px 30px 20px;
+  box-sizing: border-box;
+  background-color: #fffef0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Perforated top edge */
+.receipt-container::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: repeating-linear-gradient(
+    90deg,
+    #e8e4d9, #e8e4d9 5px,
+    transparent 5px, transparent 10px
+  );
+}
+
+.receipt-header {
+  font-family: 'Courier New', monospace;
+  text-align: center;
+  margin-bottom: 20px;
+  color: #3F3C37;
+}
+
+.receipt-barcode {
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.receipt-barcode img {
+  width: 220px;
+  height: auto;
+  mix-blend-mode: multiply;   /* white image background blends into the cream receipt */
+}
+
+.receipt-logo {
+  text-align: center;
+  margin: 10px 0 8px 0;
+}
+
+.receipt-logo img {
+  width: 140px;
+  height: auto;
+  mix-blend-mode: multiply;
+}
+
+.receipt-product  { font-size: 14px; margin-bottom: 5px; }
+.receipt-item-no  { font-size: 14px; margin-bottom: 15px; }
+
+.receipt-dashed-line {
+  border-top: 2px dashed #3F3C37;
+  margin: 15px 0;
+  opacity: 0.6;
+}
+
+/* Handwritten annotation on the receipt */
+.title-note {
+  position: absolute;
+  top: 95px;
+  left: 400px;
+  width: 130px;
+  font-family: 'Caveat', cursive;
+  font-weight: 600;
+  font-size: 21px;
+  line-height: 1.1;
+  color: #a8503f;
+  text-align: center;
+  transform: rotate(-6deg);
+  z-index: 10;
+}
+
+/* ---------- Receipt lines ---------- */
+.receipt-lines {
+  font-family: 'Courier New', monospace;
+  font-size: 16px;
+  margin: 20px 0;
+}
+
+.receipt-line {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 0;
+}
+
+.country {
+  flex: 0 0 180px;      /* fixed width so all bars start at the same x */
+  text-align: left;
+}
+
+.price {
+  position: relative;   /* anchor for the highlight circle */
+  flex: 0 0 36px;
+  text-align: right;
+  font-weight: bold;
+}
+
+.bar-track {
+  flex: 1;              /* the rest of the row belongs to the bar */
+  min-width: 0;
+}
+
+.bar {
+  height: 8px;
+  width: var(--width);
+  background-color: #2f6f4f;
+}
+
+/* ---------- Highlighted rows (most expensive / cheapest) ---------- */
+.receipt-line.is-top,
+.receipt-line.is-low {
+  position: relative;
+  margin-left: -8px;
+  margin-right: -8px;
+  padding: 4px 8px;
+}
+
+.receipt-line.is-top {
+  --accent: #a8503f;
+  background: rgba(168, 80, 63, 0.18);
+}
+
+.receipt-line.is-low {
+  --accent: #2f6f4f;
+  background: rgba(47, 111, 79, 0.18);
+}
+
+/* Hand-drawn circle around the price */
+.is-top .price::after,
+.is-low .price::after {
+  content: "";
+  position: absolute;
+  inset: -7px -9px;
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  transform: rotate(-4deg);
+  pointer-events: none;
+}
+
+.low-note {
+  position: absolute;
+  right: 14px;
+  font-family: 'Caveat', cursive;
+  font-weight: 600;
+  font-size: 21px;
+  color: var(--accent);
+  transform: rotate(-3deg);
+}
+
+/* ---------- Receipt summary ---------- */
+.receipt-summary {
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  margin-top: 20px;
+  color: #3F3C37;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.summary-label { font-weight: bold; }
+
+.receipt-signature {
+  text-align: center;
+  margin-top: 25px;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  color: #3F3C37;
+  letter-spacing: 1px;
+}
+
+.receipt-signature .subtitle {
+  font-size: 12px;
+  margin-top: 4px;
+  letter-spacing: 0.5px;
+}
+
+/* ---------- Page footer ---------- */
+.page-attribution {
+  display: flex;
+  align-items: center;
+  font-family: 'Caveat', cursive;
+  font-size: 20px;
+  color: #2f6f4f;
+  margin-bottom: 8px;
+  opacity: 0.8;
+}
+
+.page-attribution span + span { margin-left: 140px; }
+
+.footer-spacer { height: 20px; flex-shrink: 0; }
+
+.page-footer {
+  width: 100%;
+  margin-top: auto;
+  padding-top: 12px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  text-align: center;
+  font-size: 20px;
+  color: #4a4640;
+  letter-spacing: 1.5px;
+  border-top: 1px solid #dcd8d0;
+}
+
+/* ---------- Print (A4) ---------- */
+@media print {
+  @page { size: A4; margin: 0; }
+  body { width: 210mm; height: 297mm; margin: 0; padding: 0; overflow: hidden; background: #fff; }
+  .paper-container {
+    width: 210mm !important; height: 297mm !important;
+    max-width: none !important; min-height: auto !important;
+    margin: 0 !important; padding: 15mm !important; box-shadow: none !important;
+    background-image: url("../images/logo1.png") !important;
+    background-size: 100% 100% !important;
+    background-position: center !important; background-repeat: no-repeat !important;
+    -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;
+  }
+  .paper-container::before {
+    inset: 0 !important; top: 15mm !important; left: 15mm !important;
+    right: 15mm !important; bottom: 15mm !important;
+    background-color: #faf9f6 !important; box-shadow: none !important;
+  }
+  .paper-container::after {
+    top: 14mm !important; left: 14mm !important; right: 14mm !important; height: 8mm !important;
+  }
+}
+</style>
+
+<!-- Page container: closed at the end of the document -->
+<div class="paper-container" id="page-1">
+  <div class="masthead">TidyTuesday Diary</div>
+  <div class="masthead-rule"></div>
+
+  <div class="body-from-rule">
+    <div class="text-content">
+      <div class="title">The Price of a IKEA-KLIPPAN</div>
+      <div class="section-bar">One two-seat sofa in 26 European countries</div>
+
+      <div class="receipt-container">
+        <!-- Static note: Finland vs. Serbia (568 / 339 = +68 %) -->
+        <div class="title-note">Finland pays 68% more<br>than the cheapest<br>(Serbia)!</div>
+
+        <div class="receipt-header">
+          <div class="receipt-barcode"><img src="../images/barcode.png" alt="Barcode"></div>
+          <div class="receipt-logo"><img src="../images/ikea.png" alt="IKEA"></div>
+          <div class="receipt-product">KLIPPAN • 2-SEAT SOFA</div>
+          <div class="receipt-item-no">Item No. 40399314</div>
+          <div class="receipt-dashed-line"></div>
+        </div>
+
+        <div class="receipt-lines">
+```
+
+<!-- ===== 3. Receipt lines ===== -->
+
+```{r receipt-lines, results='asis'}
+cat(lines_html)
+```
+
+<!-- ===== 4. Closing ===== -->
+
+```{=html}
+        </div> <!-- /receipt-lines -->
+
+        <div class="receipt-dashed-line"></div>
+```
+
+```{r receipt-summary, results='asis'}
+cat(summary_html)
+```
+
+```{=html}
+        <div class="receipt-signature">
+          <div>* * * Michael Pöppelmann * * *</div>
+          <div class="subtitle">Tidy Tuesday 2026</div>
+        </div>
+      </div> <!-- /receipt-container -->
+    </div> <!-- /text-content -->
+  </div> <!-- /body-from-rule -->
+
+  <div class="page-attribution">
+    <span>Redrawn with R and Quarto</span>
+    <span>Data: github.com/rfordatascience/tidytuesday</span>
+  </div>
+  <div class="footer-spacer"></div>
+  <div class="page-footer">01</div>
+</div> <!-- /paper-container -->
+```
